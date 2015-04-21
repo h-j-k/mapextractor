@@ -44,7 +44,8 @@ public final class MapExtractor {
     /**
      * Regular expression for matching comments.
      */
-    private static final Pattern COMMENTS = Pattern.compile("^\\s*[#!].*$");
+    private static final Predicate<? super CharSequence> COMMENTS = v -> Pattern
+            .compile("^\\s*[#!]").matcher(v).find();
 
     /**
      * Regular expression for matching key delimiters (taking care to check if they are
@@ -246,7 +247,7 @@ public final class MapExtractor {
      */
     private static <T extends CharSequence> Stream<T> skipComments(
             final Stream<T> stream) {
-        return stream.filter(v -> !COMMENTS.matcher(v).matches());
+        return stream.filter(COMMENTS.negate());
     }
 
     /**
