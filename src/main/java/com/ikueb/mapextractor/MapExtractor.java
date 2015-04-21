@@ -42,12 +42,6 @@ import java.util.stream.Stream;
 public final class MapExtractor {
 
     /**
-     * Predicate for matching comments.
-     */
-    private static final Predicate<? super CharSequence> COMMENTS = v -> Pattern
-            .compile("^\\s*[#!]").matcher(v).find();
-
-    /**
      * Regular expression for matching key delimiters (taking care to check if they are
      * escaped).
      */
@@ -247,7 +241,14 @@ public final class MapExtractor {
      */
     private static <T extends CharSequence> Stream<T> skipComments(
             final Stream<T> stream) {
-        return stream.filter(COMMENTS.negate());
+        return stream.filter(comments().negate());
+    }
+
+    /**
+     * @return a predicate for matching comments
+     */
+    private static Predicate<? super CharSequence> comments() {
+        return v -> Pattern.compile("^\\s*[#!]").matcher(v).find();
     }
 
     /**
