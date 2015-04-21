@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 public final class MapExtractor {
 
     /**
-     * Regular expression for matching comments.
+     * Predicate for matching comments.
      */
     private static final Predicate<? super CharSequence> COMMENTS = v -> Pattern
             .compile("^\\s*[#!]").matcher(v).find();
