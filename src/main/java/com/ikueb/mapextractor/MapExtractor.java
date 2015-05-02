@@ -226,7 +226,7 @@ public final class MapExtractor {
                 (m, i) -> { CharSequence[] pair = splitWith(regex).apply(i);
                     m.merge(keyMapper.apply(pair[0]), valueMapper.apply(pair[1]),
                             mergeFunction); },
-                (a, b) -> { b.entrySet().stream().forEach(
+                (a, b) -> { b.entrySet().forEach(
                     entry -> a.merge(entry.getKey(), entry.getValue(), mergeFunction));
                     return a; },
                 Characteristics.IDENTITY_FINISH);
