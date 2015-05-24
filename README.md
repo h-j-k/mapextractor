@@ -25,7 +25,8 @@ matches the conventions imposed. Even so, doing a "group-by", or asserting for d
 
     Map<String, String> map = Pattern.compile(ENTRY_SEPARATOR).splitAsStream(input)
                                 .collect(MapExtractor.toMap(KEY_VALUE_SEPARATOR, 
-                                        Function.identity(), Function.identity(), (a, b) -> b));
+                                        Function.identity(), Function.identity(), 
+                                        (a, b) -> b));
 
 Alternatively, assuming we already have a `inputStream` and it can be processed as a `Properties` object:
 
