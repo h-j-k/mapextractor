@@ -1,22 +1,35 @@
+/*
+ * Copyright 2015 h-j-k. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.ikueb.mapextractor;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.testng.annotations.Test;
@@ -27,10 +40,9 @@ public class MapExtractorTest {
      * Test entries consist of optional whitespaces, escaped key delimiters, comments
      * and no-value keys.
      */
-    private static final Supplier<Stream<String>> TEST_ENTRIES = () -> {
-        return Stream.of(" a=b ", "c : d ", " c : e", "c : f", "g\\=h=i", "j\\:k:l",
-                " ! this is a comment", " # this is a comment", "xyz");
-    };
+    private static final Supplier<Stream<String>> TEST_ENTRIES = () -> Stream.of(
+            " a=b ", "c : d ", " c : e", "c : f", "g\\=h=i", "j\\:k:l",
+            " ! this is a comment", " # this is a comment", "xyz");
 
     @Test
     public void testAsProperties() throws IOException {
@@ -44,9 +56,9 @@ public class MapExtractorTest {
     @Test
     public void testGroupingBy() {
         assertThat(MapExtractor.groupingBy(TEST_ENTRIES.get()),
-                equalTo(toMap(enlist("a", "c", "g=h", "j:k", "xyz"),
-                        enlist(enlist("b "), enlist("d ", "e", "f"),
-                                enlist("i"), enlist("l"), enlist("")))));
+                equalTo(toMap(asList("a", "c", "g=h", "j:k", "xyz"),
+                        asList(asList("b "), asList("d ", "e", "f"),
+                                asList("i"), asList("l"), asList("")))));
     }
 
     @Test
@@ -69,8 +81,7 @@ public class MapExtractorTest {
 
     @Test
     public void testKeyAndValueMapping() {
-        assertThat(Stream.of(
-                new StringBuilder("key1=value1"), new StringBuilder("key2=value2"))
+        assertThat(Stream.of("key1=value1", "key2=value2")
                 .collect(MapExtractor.toMap("=",
                         k -> new StringBuilder(k).reverse().toString().toUpperCase(),
                         v -> new StringBuilder(v).reverse().toString())),
@@ -87,17 +98,12 @@ public class MapExtractorTest {
                         (a, b) -> a + b)).get("k1"), equalTo(14));
     }
 
-    private static <T> List<T> enlist(T... values) {
-        return Arrays.asList(values);
-    }
-
     private static <T> Map<T, T> toMap(T... inputs) {
-        if (Objects.requireNonNull(inputs).length % 2 != 0) {
-            throw new IllegalArgumentException(
-                    "Unable to create pairings from an odd number of inputs.");
+        if (inputs.length % 2 != 0) {
+            throw new IllegalArgumentException("Unable to map an odd number of inputs.");
         }
-        final List<T> keys = new ArrayList<>();
-        final List<T> values = new ArrayList<>();
+        List<T> keys = new ArrayList<>();
+        List<T> values = new ArrayList<>();
         for (int i = 0; i < inputs.length; i++) {
             keys.add(inputs[i]);
             values.add(inputs[++i]);
@@ -114,17 +120,11 @@ public class MapExtractorTest {
      * @throws IllegalArgumentException if there is a different number of distinct keys
      *             and values
      */
-    private static <K, V> Map<K, V> toMap(Collection<K> keys, Collection<V> values) {
-        final Map<K, V> result = new HashMap<>();
-        final Iterator<K> keyIterator = Objects.requireNonNull(keys).iterator();
-        final Iterator<V> valueIterator = Objects.requireNonNull(values).iterator();
-        while (keyIterator.hasNext() && valueIterator.hasNext()) {
-            result.put(keyIterator.next(), valueIterator.next());
+    private static <K, V> Map<K, V> toMap(List<K> keys, List<V> values) {
+        if (keys.size() != values.size()) {
+            throw new IllegalArgumentException("Keys and values counts do not match.");
         }
-        if (keyIterator.hasNext() || valueIterator.hasNext()) {
-            throw new IllegalArgumentException(
-                    "Different number of distinct keys and values.");
-        }
-        return result;
+        return IntStream.range(0, keys.size()).collect(HashMap::new,
+                (map, i) -> map.put(keys.get(i), values.get(i)), Map::putAll);
     }
 }

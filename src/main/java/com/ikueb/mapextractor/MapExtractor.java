@@ -1,7 +1,22 @@
+/*
+ * Copyright 2015 h-j-k. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.ikueb.mapextractor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,10 +77,10 @@ public final class MapExtractor {
      * @return a {@link Properties} instance based on {@code entries}
      * @see Properties#load(java.io.Reader)
      */
-    public static Properties asProperties(final Stream<? extends CharSequence> entries) {
-        final Properties props = new Properties();
-        props.putAll(skipComments(entries).collect(toMap(REGEX_DELIMITER, toKey(), toValue(),
-                (a, b) -> { return b; })));
+    public static Properties asProperties(Stream<? extends CharSequence> entries) {
+        Properties props = new Properties();
+        props.putAll(skipComments(entries).collect(toMap(REGEX_DELIMITER,
+                toKey(), toValue(), (a, b) -> b)));
         return props;
     }
 
@@ -79,7 +94,7 @@ public final class MapExtractor {
      * @return a {@link Map}
      */
     public static Map<String, List<String>> groupingBy(
-            final Stream<? extends CharSequence> entries) {
+            Stream<? extends CharSequence> entries) {
         return skipComments(entries).collect(groupingBy(REGEX_DELIMITER, toKey(), toValue()));
     }
 
@@ -93,8 +108,7 @@ public final class MapExtractor {
      * @return a {@link Map}
      * @see #toMap(String, Function, Function)
      */
-    public static Map<String, String> simpleMap(
-            final Stream<? extends CharSequence> entries) {
+    public static Map<String, String> simpleMap(Stream<? extends CharSequence> entries) {
         return skipComments(entries).collect(toMap(REGEX_DELIMITER, toKey(), toValue()));
     }
 
@@ -108,7 +122,7 @@ public final class MapExtractor {
      * @return a {@link Map}
      */
     public static Map<String, String> simpleMapAndJoin(
-            final Stream<? extends CharSequence> entries) {
+            Stream<? extends CharSequence> entries) {
         return simpleMapAndJoin(entries, JOIN_DELIMITER);
     }
 
@@ -123,7 +137,7 @@ public final class MapExtractor {
      * @return a {@link Map}
      */
     public static Map<String, String> simpleMapAndJoin(
-            final Stream<? extends CharSequence> entries, final String joinDelimiter) {
+            Stream<? extends CharSequence> entries, String joinDelimiter) {
         return skipComments(entries).collect(toMapAndJoin(REGEX_DELIMITER, joinDelimiter));
     }
 
@@ -146,9 +160,9 @@ public final class MapExtractor {
      * @return a {@link Map}
      * @see Collectors#groupingBy(Function)
      */
-    public static <K, V> Collector<CharSequence, ?, Map<K, List<V>>> groupingBy(
-            final String regex, final Function<? super CharSequence, K> keyMapper,
-            final Function<? super CharSequence, V> valueMapper) {
+    public static <K, V> Collector<CharSequence, ?, Map<K, List<V>>> groupingBy(String regex,
+            Function<? super CharSequence, K> keyMapper,
+            Function<? super CharSequence, V> valueMapper) {
         return toMap(regex, keyMapper, enlist(valueMapper), joinList());
     }
 
@@ -163,7 +177,7 @@ public final class MapExtractor {
      * @return a {@link Collector}
      */
     public static Collector<CharSequence, ?, Map<String, String>> toMapAndJoin(
-            final String regex, final String joinDelimiter) {
+            String regex, String joinDelimiter) {
         return toMap(regex, toKey(), toValue(), join(joinDelimiter));
     }
 
@@ -178,9 +192,9 @@ public final class MapExtractor {
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function)
      */
-    public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(
-            final String regex, final Function<? super CharSequence, K> keyMapper,
-            final Function<? super CharSequence, V> valueMapper) {
+    public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(String regex,
+            Function<? super CharSequence, K> keyMapper,
+            Function<? super CharSequence, V> valueMapper) {
         return toMap(regex, keyMapper, valueMapper, duplicateKeyMergeThrower());
     }
 
@@ -196,10 +210,10 @@ public final class MapExtractor {
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function, BinaryOperator)
      */
-    public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(
-            final String regex, final Function<? super CharSequence, K> keyMapper,
-            final Function<? super CharSequence, V> valueMapper,
-            final BinaryOperator<V> mergeFunction) {
+    public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(String regex,
+            Function<? super CharSequence, K> keyMapper,
+            Function<? super CharSequence, V> valueMapper,
+            BinaryOperator<V> mergeFunction) {
         return toMap(regex, keyMapper, valueMapper, mergeFunction, HashMap::new);
     }
 
@@ -217,9 +231,9 @@ public final class MapExtractor {
      * @see Collectors#toMap(Function, Function, BinaryOperator, Supplier)
      */
     public static <K, V, M extends Map<K, V>> Collector<CharSequence, ?, M> toMap(
-            final String regex, final Function<? super CharSequence, K> keyMapper,
-            final Function<? super CharSequence, V> valueMapper,
-            final BinaryOperator<V> mergeFunction, final Supplier<M> mapSupplier) {
+            String regex, Function<? super CharSequence, K> keyMapper,
+            Function<? super CharSequence, V> valueMapper,
+            BinaryOperator<V> mergeFunction, Supplier<M> mapSupplier) {
         Stream.of(regex, keyMapper, valueMapper, mergeFunction, mapSupplier)
                 .forEach(Objects::requireNonNull);
         return Collector.of(mapSupplier,
@@ -239,8 +253,7 @@ public final class MapExtractor {
      * @param stream the stream to filter
      * @return a {@link Predicate} to skip comment lines
      */
-    private static <T extends CharSequence> Stream<T> skipComments(
-            final Stream<T> stream) {
+    private static <T extends CharSequence> Stream<T> skipComments(Stream<T> stream) {
         return stream.filter(comments().negate());
     }
 
@@ -260,8 +273,8 @@ public final class MapExtractor {
      *         {@link String} ({@code ""}) if there is no second sub-{@link String} from
      *         the split
      */
-    private static Function<? super CharSequence, CharSequence[]> splitWith(
-            final String regex) {
+    private static Function<? super CharSequence, CharSequence[]>
+            splitWith(String regex) {
         return v -> { String[] result = v.toString().split(regex, 2);
             return result.length == 2 ? result : new String[] { result[0], "" };
         };
@@ -288,8 +301,8 @@ public final class MapExtractor {
      * @return a {@link Function} that wraps an element in an {@link ArrayList}
      */
     private static <T, U> Function<? super T, List<U>> enlist(
-            final Function<? super T, U> mapper) {
-        return mapper.andThen(v -> new ArrayList<>(Arrays.asList(v)));
+            Function<? super T, U> mapper) {
+        return mapper.andThen(v -> new ArrayList<>(Collections.singletonList(v)));
     }
 
     /**
@@ -303,7 +316,7 @@ public final class MapExtractor {
      * @param delimiter the delimiter to use for joining {@link String}s
      * @return a joined {@link String} on the {@code delimiter}
      */
-    private static BinaryOperator<String> join(final String delimiter) {
+    private static BinaryOperator<String> join(String delimiter) {
         return (a, b) -> String.join(delimiter, a, b);
     }
 
