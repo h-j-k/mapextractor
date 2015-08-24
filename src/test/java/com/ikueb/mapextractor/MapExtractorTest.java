@@ -98,7 +98,8 @@ public class MapExtractorTest {
                         (a, b) -> a + b)).get("k1"), equalTo(14));
     }
 
-    private static <T> Map<T, T> toMap(T... inputs) {
+    @SafeVarargs
+	private static <T> Map<T, T> toMap(T... inputs) {
         if (inputs.length % 2 != 0) {
             throw new IllegalArgumentException("Unable to map an odd number of inputs.");
         }
