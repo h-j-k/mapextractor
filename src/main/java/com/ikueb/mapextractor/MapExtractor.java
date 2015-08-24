@@ -114,9 +114,9 @@ public final class MapExtractor {
 
     /**
      * Handles the stream like the line-oriented format for loading a {@link Properties}
-     * instance, except that values for the same key are joined, multi-line values are
-     * not supported and the default key delimiter can only be escaped with {@code "\"}
-     * once.
+     * instance, except that values for the same key are joined using {@link #JOIN_DELIMITER}, 
+     * multi-line values are not supported and the default key delimiter can only be escaped 
+     * with {@code "\"} once.
      *
      * @param entries lines to process
      * @return a {@link Map}
