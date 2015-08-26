@@ -110,8 +110,8 @@ public class MapExtractorTest {
     private void testParsing(String recordSeparator, 
             Supplier<Parser<String, String>> parserSupplier) {
         assertThat(parserSupplier.get().parse(
-                String.join(recordSeparator, "a=b", "c:d", "e\\=f:g", "h\\:i=j")),
-        equalTo(toMap("a", "b", "c", "d", "e=f", "g", "h:i", "j")));
+                String.join(recordSeparator, "a=b", "a:c", "d\\=e:f", "g\\:h=i")),
+        equalTo(toMap("a", "b, c", "d=e", "f", "g:h", "i")));
     }
     
     @Test
