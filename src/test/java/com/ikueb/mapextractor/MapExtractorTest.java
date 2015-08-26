@@ -22,10 +22,12 @@ import static org.hamcrest.Matchers.equalTo;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -33,6 +35,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.testng.annotations.Test;
+
+import com.ikueb.mapextractor.MapExtractor.Parser;
 
 public class MapExtractorTest {
 
@@ -87,15 +91,56 @@ public class MapExtractorTest {
                         v -> new StringBuilder(v).reverse().toString())),
                 equalTo(toMap("1YEK", "1eulav", "2YEK", "2eulav")));
     }
+    
+    @Test
+    public void testNewlineParsing() {
+        testParsing(System.lineSeparator(), () -> MapExtractor.withNewline());
+    }
+    
+    @Test
+    public void testCommaParsing() {
+        testParsing(",", () -> MapExtractor.withComma());
+    }
+    
+    @Test
+    public void testSemicolonParsing() {
+        testParsing(";", () -> MapExtractor.withSemicolon());
+    }
+    
+    private void testParsing(String recordSeparator, 
+            Supplier<Parser<String, String>> parserSupplier) {
+        assertThat(parserSupplier.get().parse(
+                String.join(recordSeparator, "a=b", "c:d", "e\\=f:g", "h\\:i=j")),
+        equalTo(toMap("a", "b", "c", "d", "e=f", "g", "h:i", "j")));
+    }
+    
+    @Test
+    public void testParsingWithRSFS() {
+        assertThat(MapExtractor.with("\\|", "!").parse("a|a!|a!b|a!c"), 
+                equalTo(toMap("a", "bc")));
+    }
+    
+    @Test
+    public void testParsingWithRSFSNullOFS() {
+        assertThat(MapExtractor.with("\\|", "!", null).parse("a!b|a!c"), 
+                equalTo(toMap("a", "c")));
+    }
+    
+    @Test
+    public void testCustomParsing() {
+        assertThat(MapExtractor.build("\\|", "~", Function.identity(), 
+                    Integer::parseInt, (a, b) -> a + b).parse("a~1|a~2"),
+                equalTo(toMap(Collections.singletonList("a"),
+                        Collections.singletonList(Integer.valueOf(3)))));
+    }
 
-    @SuppressWarnings("boxing")
     @Test
     public void testValueMerging() {
         assertThat(Stream.of("k1=1,2", "k2=3,4", "k1=5,6").collect(
                 MapExtractor.toMap("=", Object::toString,
                         v -> Pattern.compile(",").splitAsStream(v)
                         .mapToInt(Integer::parseInt).sum(),
-                        (a, b) -> a + b)).get("k1"), equalTo(14));
+                        (a, b) -> a + b)).get("k1"), equalTo(Integer.valueOf(14)));
     }
 
     @SafeVarargs

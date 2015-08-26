@@ -16,6 +16,7 @@
 package com.ikueb.mapextractor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -206,15 +207,15 @@ public final class MapExtractor {
      * @param regex the delimiter to use
      * @param keyMapper
      * @param valueMapper
-     * @param mergeFunction
+     * @param merger
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function, BinaryOperator)
      */
     public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(String regex,
             Function<? super CharSequence, K> keyMapper,
             Function<? super CharSequence, V> valueMapper,
-            BinaryOperator<V> mergeFunction) {
-        return toMap(regex, keyMapper, valueMapper, mergeFunction, HashMap::new);
+            BinaryOperator<V> merger) {
+        return toMap(regex, keyMapper, valueMapper, merger, HashMap::new);
     }
 
     /**
@@ -225,7 +226,7 @@ public final class MapExtractor {
      * @param regex the delimiter to use
      * @param keyMapper
      * @param valueMapper
-     * @param mergeFunction
+     * @param merger
      * @param mapSupplier
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function, BinaryOperator, Supplier)
@@ -233,15 +234,15 @@ public final class MapExtractor {
     public static <K, V, M extends Map<K, V>> Collector<CharSequence, ?, M> toMap(
             String regex, Function<? super CharSequence, K> keyMapper,
             Function<? super CharSequence, V> valueMapper,
-            BinaryOperator<V> mergeFunction, Supplier<M> mapSupplier) {
-        Stream.of(regex, keyMapper, valueMapper, mergeFunction, mapSupplier)
+            BinaryOperator<V> merger, Supplier<M> mapSupplier) {
+        Stream.of(regex, keyMapper, valueMapper, merger, mapSupplier)
                 .forEach(Objects::requireNonNull);
         return Collector.of(mapSupplier,
-                (m, i) -> { CharSequence[] pair = splitWith(regex).apply(i);
+                (m, i) -> { String[] pair = splitWith(regex).apply(i);
                     m.merge(keyMapper.apply(pair[0]), valueMapper.apply(pair[1]),
-                            mergeFunction); },
+                            merger); },
                 (a, b) -> { b.entrySet().forEach(
-                    entry -> a.merge(entry.getKey(), entry.getValue(), mergeFunction));
+                    entry -> a.merge(entry.getKey(), entry.getValue(), merger));
                     return a; },
                 Characteristics.IDENTITY_FINISH);
     }
@@ -273,7 +274,7 @@ public final class MapExtractor {
      *         {@link String} ({@code ""}) if there is no second sub-{@link String} from
      *         the split
      */
-    private static Function<? super CharSequence, CharSequence[]>
+    private static Function<? super CharSequence, String[]>
             splitWith(String regex) {
         return v -> { String[] result = v.toString().split(regex, 2);
             return result.length == 2 ? result : new String[] { result[0], "" };
@@ -332,5 +333,52 @@ public final class MapExtractor {
             throw new IllegalStateException(String.format(
                     "Duplicate key for values \"%s\" and \"%s\".", a, b));
         };
+    }
+    
+    public static Parser<String, String> withNewline() {
+        return with(System.lineSeparator() + "+", REGEX_DELIMITER, JOIN_DELIMITER);
+    }
+    
+    public static Parser<String, String> withComma() {
+        return with(",+", REGEX_DELIMITER, JOIN_DELIMITER);
+    }
+    
+    public static Parser<String, String> withSemicolon() {
+        return with(";+", REGEX_DELIMITER, JOIN_DELIMITER);
+    }
+    
+    public static Parser<String, String> with(String rs, String fs) {
+        return with(rs, fs, "");
+    }
+    
+    public static Parser<String, String> with(String rs, String fs, String ofs) {
+        return build(rs, fs, toKey().compose(Function.identity()), 
+                toValue().compose(Function.identity()), 
+                ofs == null ? (a, b) -> b : 
+                    (a, b) -> a.isEmpty() ? b : b.isEmpty() ? a : String.join(ofs, a, b));
+    }
+    
+    public static <K, V> Parser<K, V> build(String rs, String fs, 
+            Function<String, K> keyMapper, Function<String, V> valueMapper, 
+            BinaryOperator<V> merger) {
+        return new Parser<>(rs, fs, keyMapper, valueMapper, merger);
+    }
+    
+    public static final class Parser<K, V> {
+        private final Function<? super CharSequence, Stream<String[]>> flattener;
+        private final Collector<String[], ?, Map<K, V>> collector;
+        
+        private Parser(String rs, String fs, Function<String, K> keyMapper, 
+                Function<String, V> valueMapper, BinaryOperator<V> merger) {
+            Stream.of(rs, fs, keyMapper, valueMapper, merger)
+                    .forEach(Objects::requireNonNull);
+            flattener = s -> Pattern.compile(rs).splitAsStream(s).map(splitWith(fs));
+            collector = Collectors.toMap(i -> keyMapper.apply(i[0]), 
+                    i -> valueMapper.apply(i[1]), merger);
+        }
+        
+        public Map<K, V> parse(CharSequence... inputs) {
+            return Arrays.stream(inputs).flatMap(flattener).collect(collector);
+        }
     }
 }
