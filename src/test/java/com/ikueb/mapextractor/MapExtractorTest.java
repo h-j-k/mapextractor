@@ -116,7 +116,7 @@ public class MapExtractorTest {
     
     @Test
     public void testParsingWithRSFS() {
-        assertThat(MapExtractor.with("\\|", "!").parse("a|a!|a!b|a!c"), 
+        assertThat(MapExtractor.with("\\|", "!").parse("a|a!", "a!b|a!c"), 
                 equalTo(toMap("a", "bc")));
     }
     
