@@ -262,7 +262,7 @@ public final class MapExtractor {
      * @return a predicate for matching comments
      */
     private static Predicate<? super CharSequence> comments() {
-        return v -> Pattern.compile("^\\s*[#!]").matcher(v).find();
+        return v -> Pattern.compile("^\\s*([#!]|$)").matcher(v).find();
     }
 
     /**
@@ -335,16 +335,24 @@ public final class MapExtractor {
         };
     }
     
-    public static Parser<String, String> withNewline() {
-        return with(System.lineSeparator() + "+", REGEX_DELIMITER, JOIN_DELIMITER);
-    }
-    
     public static Parser<String, String> withComma() {
-        return with(",+", REGEX_DELIMITER, JOIN_DELIMITER);
+        return withChar(',');
     }
     
     public static Parser<String, String> withSemicolon() {
-        return with(";+", REGEX_DELIMITER, JOIN_DELIMITER);
+        return withChar(';');
+    }
+    
+    public static Parser<String, String> withTab() {
+        return withChar('\t');
+    }
+    
+    public static Parser<String, String> withChar(char rs) {
+        return with(String.valueOf(rs), REGEX_DELIMITER, JOIN_DELIMITER);
+    }
+    
+    public static Parser<String, String> withNewline() {
+        return with(System.lineSeparator(), REGEX_DELIMITER, JOIN_DELIMITER);
     }
     
     public static Parser<String, String> with(String rs, String fs) {
@@ -352,13 +360,13 @@ public final class MapExtractor {
     }
     
     public static Parser<String, String> with(String rs, String fs, String ofs) {
-        return build(rs, fs, toKey().compose(Function.identity()), 
+        return with(rs, fs, toKey().compose(Function.identity()), 
                 toValue().compose(Function.identity()), 
                 ofs == null ? (a, b) -> b : 
                     (a, b) -> a.isEmpty() ? b : b.isEmpty() ? a : String.join(ofs, a, b));
     }
     
-    public static <K, V> Parser<K, V> build(String rs, String fs, 
+    public static <K, V> Parser<K, V> with(String rs, String fs, 
             Function<String, K> keyMapper, Function<String, V> valueMapper, 
             BinaryOperator<V> merger) {
         return new Parser<>(rs, fs, keyMapper, valueMapper, merger);
@@ -372,13 +380,14 @@ public final class MapExtractor {
                 Function<String, V> valueMapper, BinaryOperator<V> merger) {
             Stream.of(rs, fs, keyMapper, valueMapper, merger)
                     .forEach(Objects::requireNonNull);
-            flattener = s -> Pattern.compile(rs).splitAsStream(s).map(splitWith(fs));
+            flattener = s -> Arrays.stream(s.toString().split(rs)).map(splitWith(fs));
             collector = Collectors.toMap(i -> keyMapper.apply(i[0]), 
                     i -> valueMapper.apply(i[1]), merger);
         }
         
         public Map<K, V> parse(CharSequence... inputs) {
-            return Arrays.stream(inputs).flatMap(flattener).collect(collector);
+            return Arrays.stream(inputs).filter(s -> s.length() > 0)
+                    .flatMap(flattener).collect(collector);
         }
     }
 }

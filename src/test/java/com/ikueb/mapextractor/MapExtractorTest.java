@@ -22,14 +22,14 @@ import static org.hamcrest.Matchers.equalTo;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -40,19 +40,24 @@ import com.ikueb.mapextractor.MapExtractor.Parser;
 
 public class MapExtractorTest {
 
-    /**
-     * Test entries consist of optional whitespaces, escaped key delimiters, comments
-     * and no-value keys.
-     */
-    private static final Supplier<Stream<String>> TEST_ENTRIES = () -> Stream.of(
-            " a=b ", "c : d ", " c : e", "c : f", "g\\=h=i", "j\\:k:l",
-            " ! this is a comment", " # this is a comment", "xyz");
+    private static final List<String> STANDARD = Arrays.asList(" a=b ", 
+            "c : d ", " c : e", "c : f", "g\\=h=i", "j\\:k:l", "xyz", "");
+    
+    private static final List<String> COMMENTS = Arrays.asList(
+            " ! this is a comment", " # this is a comment");
+
+    private static final Supplier<Stream<String>> TEST_ENTRIES = 
+            () -> Stream.of(STANDARD, COMMENTS).map(Collection::stream)
+                        .reduce(Stream::concat).get();
+    
+    private static final Map<String, String> TEST_MAP = toMap("a", "b ", 
+            "c", "d , e, f", "g=h", "i", "j:k", "l", "xyz", "");
 
     @Test
     public void testAsProperties() throws IOException {
         final Properties props = new Properties();
         props.load(new StringReader(TEST_ENTRIES.get()
-                .collect(Collectors.joining("\n"))));
+                .collect(Collectors.joining(System.lineSeparator()))));
         assertThat(MapExtractor.asProperties(TEST_ENTRIES.get()),
                 equalTo(new HashMap<>(props)));
     }
@@ -79,8 +84,7 @@ public class MapExtractorTest {
     @Test
     public void testSimpleMapAndJoin() {
         assertThat(MapExtractor.simpleMapAndJoin(TEST_ENTRIES.get()),
-                equalTo(toMap("a", "b ", "c", "d , e, f",
-                        "g=h", "i", "j:k", "l", "xyz", "")));
+                equalTo(TEST_MAP));
     }
 
     @Test
@@ -93,25 +97,34 @@ public class MapExtractorTest {
     }
     
     @Test
-    public void testNewlineParsing() {
-        testParsing(System.lineSeparator(), () -> MapExtractor.withNewline());
-    }
-    
-    @Test
     public void testCommaParsing() {
-        testParsing(",", () -> MapExtractor.withComma());
+        testReadyParsing(",", () -> MapExtractor.withComma());
     }
     
     @Test
     public void testSemicolonParsing() {
-        testParsing(";", () -> MapExtractor.withSemicolon());
+        testReadyParsing(";", () -> MapExtractor.withSemicolon());
     }
     
-    private void testParsing(String recordSeparator, 
+    @Test
+    public void testTabParsing() {
+        testReadyParsing("\t", () -> MapExtractor.withTab());
+    }
+    
+    @Test
+    public void testNewlineParsing() {
+        testReadyParsing(System.lineSeparator(), () -> MapExtractor.withNewline());
+    }
+    
+    private static void testReadyParsing(String rs, 
             Supplier<Parser<String, String>> parserSupplier) {
-        assertThat(parserSupplier.get().parse(
-                String.join(recordSeparator, "a=b", "a:c", "d\\=e:f", "g\\:h=i")),
-        equalTo(toMap("a", "b, c", "d=e", "f", "g:h", "i")));
+        Parser<String, String> parser = parserSupplier.get();
+        assertThat(parser.parse(STANDARD.stream()
+                    .collect(Collectors.joining(rs))),
+                equalTo(TEST_MAP));
+        assertThat(parser.parse("a"), equalTo(toMap("a", "")));
+        assertThat(parser.parse("", rs, rs + rs), equalTo(Collections.emptyMap()));
+        assertThat(parser.parse(rs + " " + rs),  equalTo(toMap("", "")));
     }
     
     @Test
@@ -128,8 +141,8 @@ public class MapExtractorTest {
     
     @Test
     public void testCustomParsing() {
-        assertThat(MapExtractor.build("\\|", "~", Function.identity(), 
-                    Integer::parseInt, (a, b) -> a + b).parse("a~1|a~2"),
+        assertThat(MapExtractor.with("\\|", "~", String::toLowerCase, 
+                    Integer::parseInt, (a, b) -> a + b).parse("A~1|a~2"),
                 equalTo(toMap(Collections.singletonList("a"),
                         Collections.singletonList(Integer.valueOf(3)))));
     }
@@ -138,13 +151,13 @@ public class MapExtractorTest {
     public void testValueMerging() {
         assertThat(Stream.of("k1=1,2", "k2=3,4", "k1=5,6").collect(
                 MapExtractor.toMap("=", Object::toString,
-                        v -> Pattern.compile(",").splitAsStream(v)
-                        .mapToInt(Integer::parseInt).sum(),
+                        v -> Arrays.stream(v.toString().split(","))
+                                    .mapToInt(Integer::parseInt).sum(),
                         (a, b) -> a + b)).get("k1"), equalTo(Integer.valueOf(14)));
     }
 
     @SafeVarargs
-	private static <T> Map<T, T> toMap(T... inputs) {
+    private static <T> Map<T, T> toMap(T... inputs) {
         if (inputs.length % 2 != 0) {
             throw new IllegalArgumentException("Unable to map an odd number of inputs.");
         }
