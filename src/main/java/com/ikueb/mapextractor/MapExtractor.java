@@ -428,7 +428,8 @@ public final class MapExtractor {
      * @see #toValue()
      */
     public static Parser<String, String> with(String rs, String fs, String ofs) {
-        return with(rs, fs, toKey().compose(t -> t), toValue().compose(t -> t), 
+        return with(rs, fs, toKey().compose(String::toString), 
+                toValue().compose(String::toString), 
                 ofs == null ? (a, b) -> b : 
                     (a, b) -> a.isEmpty() ? b : b.isEmpty() ? a : String.join(ofs, a, b));
     }
