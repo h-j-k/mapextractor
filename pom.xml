@@ -3,12 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.ikueb</groupId>
 	<artifactId>mapextractor</artifactId>
-	<version>0.2.0-SNAPSHOT</version>
+	<version>0.3.0-SNAPSHOT</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<name>mapextractor</name>
-    <description>Map Extractor.</description>
 	<build>
 		<plugins>
 			<plugin>
@@ -55,4 +54,6 @@
             <version>[1.1,)</version>
         </dependency>
     </dependencies>
+    <url>https://github.com/h-j-k/mapextractor</url>
+    <description>A map extraction utility to convert lines of &quot;key=value&quot; to Map objects, in the style of Collections.toMap().</description>
 </project>
