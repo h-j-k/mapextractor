@@ -8,7 +8,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<name>mapextractor</name>
-    <description>Map Extractor.</description>
 	<build>
 		<plugins>
 			<plugin>
@@ -55,4 +54,6 @@
             <version>[1.1,)</version>
         </dependency>
     </dependencies>
+    <url>https://github.com/h-j-k/mapextractor</url>
+    <description>A map extraction utility to convert lines of &quot;key=value&quot; to Map objects, in the style of Collections.toMap().</description>
 </project>
