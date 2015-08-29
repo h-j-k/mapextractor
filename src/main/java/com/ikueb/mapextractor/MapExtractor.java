@@ -54,7 +54,7 @@ import java.util.stream.Stream;
  * </ul>
  * </li>
  * <li>A {@link MapExtractor.Parser} parser implementation for facilitating
- * quick, 'one-shot' {@link String}-to-{@link Map} conversions.
+ * quick, 'one-shot' {@link CharSequence}-to-{@link Map} conversions.
  * <ul>
  * <li>Whereas the methods and collectors above adhere more closely to
  * line-based processing, where each stream element is a line, this uses the
@@ -421,11 +421,11 @@ public final class MapExtractor {
      * <ol>
      * <li>If the output field separator ({@code ofs}) is passed as {@code null}
      * , the more recent value of duplicate keys will be used.</li>
-     * <li>If either value is empty, the other value will be used, else
-     * {@link String#join(CharSequence, CharSequence...)} is used.</li>
+     * <li>If either value is empty, the other value will be used.</li>
+     * <li>Otherwise, {@link String#join(CharSequence, CharSequence...)} is
+     * used. This is done so that there will not be any superfluous separators
+     * in the final value.</li>
      * </ol>
-     * This is done so that there will not be any superfluous separators in the
-     * final value.
      * 
      * @param rs
      *            the record separator to use
@@ -463,8 +463,8 @@ public final class MapExtractor {
      * the main {@link MapExtractor} utility class adheres more closely to
      * line-based processing, where each stream element is a line, this uses the
      * notion of 'records', where a stream element may contain more than one
-     * record. This is useful for facilitating quick, 'one-shot' {@link String}
-     * -to-{@link Map} conversions.
+     * record. This is useful for facilitating quick, 'one-shot'
+     * {@link CharSequence}-to-{@link Map} conversions.
      * <p>
      * Implementation notes:
      * <ul>
