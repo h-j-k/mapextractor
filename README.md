@@ -1,5 +1,7 @@
 # Mapextractor
 
+[![Build Status](https://travis-ci.org/h-j-k/mapextractor.svg?branch=master)](https://travis-ci.org/h-j-k/mapextractor)
+
 A map extraction utility to convert lines of `"key=value"` to `Map` objects, in the style of `Collections.toMap()`.
 
 # Motivation
