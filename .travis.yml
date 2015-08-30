@@ -4,4 +4,4 @@ jdk:
   - oraclejdk8
   
 after_success:
-  - chmod +x .travis-scripts/javadoc.sh && .travis-scripts/javadoc.sh
+  - chmod +x .travis-scripts/javadoc.sh && $_
