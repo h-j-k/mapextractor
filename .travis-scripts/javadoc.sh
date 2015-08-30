@@ -8,11 +8,11 @@ jdb=gh-pages
 websrc=$TRAVIS_BUILD_DIR/target/site/apidocs
 webtgt=$jdb
 mvn javadoc:javadoc
-ls -l $websrc; exit
 git config --global user.email "travis@travis-ci.org"
 git config --global user.name "travis-ci"
 lgm "Cloning..."
-git clone --quiet --branch=$jdb https://${GH_TOKEN}@github.com/$myid/$myproj $webtgt > /dev/null
+cd $HOME
+git clone --quiet --branch=$jdb https://${gh_token}@github.com/$myid/$myproj $webtgt > /dev/null
 pushd $webtgt
 lgm "Copying..."; rm -rf apidocs && cp -Rf $websrc .
 lgm "Adding..."; git add -f . > /dev/null
