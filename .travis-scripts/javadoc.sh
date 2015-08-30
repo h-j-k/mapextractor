@@ -2,8 +2,8 @@
 lgm() { date "+%c%t$1"; }
 [[ "$TRAVIS_PULL_REQUEST" != false || "$TRAVIS_BRANCH" != master ]] \
 	&& exit || lgm "Generating Javadocs..."
-myid=h-j-k
-myproj=mapextractor
+myid=${TRAVIS_REPO_SLUG%/*}
+myproj=${TRAVIS_REPO_SLUG##*/}
 jdb=gh-pages
 websrc=$TRAVIS_BUILD_DIR/target/site/apidocs
 webtgt=$jdb
