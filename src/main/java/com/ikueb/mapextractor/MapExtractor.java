@@ -459,7 +459,7 @@ public final class MapExtractor {
      * <ul>
      * <li>The underlying transformation is done using a {@link Stream#flatMap(Function)},
      * so it does not directly use the {@link Collector} implementations of
-     * {@link MapExtractor}. However, certain underlying fields methods are reused and
+     * {@link MapExtractor}. However, certain underlying fields and methods are reused and
      * will be pointed out where appropriate.</li>
      * <li>The {@link Function} for performing the flat-mapping and {@link Collector} are
      * defined during instantiation.</li>
