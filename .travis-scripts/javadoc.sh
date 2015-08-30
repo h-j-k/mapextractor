@@ -1,5 +1,5 @@
 #!/bin/bash
-lgm() { date "+%c"$'\t'"$1"$'\n'; }
+lgm() { date "+%c%t$1"; }
 [[ "$TRAVIS_PULL_REQUEST" != false || "$TRAVIS_BRANCH" != master ]] \
 	&& exit || lgm "Generating Javadocs..."
 myid=h-j-k
@@ -14,7 +14,7 @@ git config --global user.name "travis-ci"
 lgm "Cloning..."; 
 	git clone -q -b $jdb https://${gh_token}@github.com/$myid/$myproj $webtgt > /dev/null
 lgm "Copying..."; 
-	pushd $webtgt; rm -rf apidocs && cp -Rf $websrc .
+	cd $webtgt; rm -rf apidocs && cp -Rf $websrc .
 lgm "Adding..."; 
 	git add -f . > /dev/null
 lgm "Committing..."; 
