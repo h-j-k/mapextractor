@@ -13,13 +13,13 @@ cd $HOME
 git config --global user.email "travis@travis-ci.org"
 git config --global user.name "travis-ci"
 lgm Cloning... 
-	git clone -b $jdb https://${gh_token}@github.com/$myid/$myproj $webtgt # > /dev/null
-	# git clone -qb $jdb https://${gh_token}@github.com/$myid/$myproj $webtgt > /dev/null
+	git clone -b $jdb https://${gh_token}@github.com/$myid/$myproj "$webtgt" # > /dev/null
+	# git clone -qb $jdb https://${gh_token}@github.com/$myid/$myproj "$webtgt" > /dev/null
 lgm Copying...
-	rsync -r --delete $websrc $webtgt
-	# rsync -qr --delete $websrc $webtgt
+	rsync -vr --delete "$websrc" "$webtgt"
+	# rsync -qr --delete "$websrc" "$webtgt"
 lgm Adding...
-	git add -f $webtgt # > /dev/null
+	git --git-dir="$webtgt" add -f . # > /dev/null
 lgm Committing...
 	git commit -m "Published Javadoc: build $TRAVIS_BUILD_NUMBER" # > /dev/null
 lgm Pushing... 
