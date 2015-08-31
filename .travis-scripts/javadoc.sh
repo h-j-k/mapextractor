@@ -9,20 +9,16 @@ websrc=$TRAVIS_BUILD_DIR/target/site/apidocs
 webtgt=$(mktemp -d)
 [ -z "$webtgt" ] && lgm "Error creating tmp dir, bailing." && exit 1
 mvn javadoc:javadoc
-cd $HOME
 git config --global user.email "travis@travis-ci.org"
 git config --global user.name "travis-ci"
 lgm Cloning... 
 	git clone -qb $jdb https://${gh_token}@github.com/$myid/$myproj "$webtgt" > /dev/null
-	ls -l $webtgt
 lgm Copying...
 	rsync -qr --delete "$websrc" "$webtgt"
-	ls -l $webtgt/{,gh-pages/*}
 lgm Adding...
-	cd "$webtgt" && git add -f . # > /dev/null
+	cd "$webtgt" && git add -Af > /dev/null
 lgm Committing...
-	git commit -m "Published Javadoc: build $TRAVIS_BUILD_NUMBER" # > /dev/null
+	git commit -m "Published Javadoc: build $TRAVIS_BUILD_NUMBER" > /dev/null
 lgm Pushing... 
-	git push -f origin $jdb # > /dev/null
-	# git push -fq origin $jdb > /dev/null
+	git push -fq origin $jdb > /dev/null
 lgm Done.
