@@ -8,9 +8,9 @@
 build/
 
 # Eclipse
+.settings/
 .classpath
 .project
-.settings/
 
 # Maven
 log/
