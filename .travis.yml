@@ -1,3 +1,7 @@
+dist: trusty
+addons:
+  sonarqube:
+    organization: "h-j-k-github"
 language: java
 jdk:
 - oraclejdk8
@@ -17,4 +21,4 @@ deploy:
     branch: master
 after_success:
 - gradle generateJavadoc && cp "$TRAVIS_BUILD_DIR/README.md" "$TRAVIS_BUILD_DIR/build/docs"
-- gradle jacocoTestReport && bash <(curl -s https://codecov.io/bash)
+- gradle jacocoTestReport sonarqube && bash <(curl -s https://codecov.io/bash)
