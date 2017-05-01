@@ -8,6 +8,8 @@
 
 A map extraction utility to convert lines of `"key=value"` to `Map` objects, in the style of `Collections.toMap()`.
 
+[Homepage](https://h-j-k.github.io/mapextractor)
+
 [GitHub project page](https://github.com/h-j-k/mapextractor)
 
 [Javadocs](https://h-j-k.github.io/mapextractor/javadoc)
