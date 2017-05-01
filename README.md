@@ -2,6 +2,9 @@
 
 [![Build Status](https://travis-ci.org/h-j-k/mapextractor.svg?branch=master)](https://travis-ci.org/h-j-k/mapextractor) 
 [![codecov.io](http://codecov.io/github/h-j-k/mapextractor/coverage.svg?branch=master)](http://codecov.io/github/h-j-k/mapextractor?branch=master)
+[![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.ikueb:mapextractor)](https://sonarqube.com/dashboard/?id=com.ikueb:mapextractor)
+[![Technical Debt Ratio](https://sonarqube.com/api/badges/measure?key=com.ikueb:mapextractor&metric=sqale_debt_ratio)](https://sonarqube.com/dashboard/?id=com.ikueb:mapextractor)
+[![Comments](https://sonarqube.com/api/badges/measure?key=com.ikueb:mapextractor&metric=comment_lines_density)](https://sonarqube.com/dashboard/?id=com.ikueb:mapextractor)
 
 A map extraction utility to convert lines of `"key=value"` to `Map` objects, in the style of `Collections.toMap()`.
 
