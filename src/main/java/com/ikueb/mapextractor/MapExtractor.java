@@ -15,14 +15,7 @@
  */
 package com.ikueb.mapextractor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -141,7 +134,7 @@ public final class MapExtractor {
      * {@code joinDelimiter}, multi-element values are not supported and the default key
      * delimiter can only be escaped with {@code "\"} once.
      *
-     * @param entries lines to process
+     * @param entries       lines to process
      * @param joinDelimiter the join delimiter to use
      * @return a {@link Map}
      */
@@ -162,7 +155,7 @@ public final class MapExtractor {
      * {@link List#addAll(java.util.Collection)} as the merge function to
      * {@link MapExtractor#toMap(String, Function, Function, BinaryOperator)}.
      *
-     * @param regex the delimiter to use
+     * @param regex       the delimiter to use
      * @param keyMapper
      * @param valueMapper
      * @return a {@link Map}
@@ -182,7 +175,7 @@ public final class MapExtractor {
      * supported and the default key delimiter can only be escaped with
      * {@code "\"} once.
      *
-     * @param regex the delimiter to use
+     * @param regex         the delimiter to use
      * @param joinDelimiter the join delimiter to use
      * @return a {@link Collector}
      */
@@ -196,15 +189,15 @@ public final class MapExtractor {
      * element, this method is meant to be used in the same way as the equivalent in the
      * {@link Collectors} class.
      *
-     * @param regex the delimiter to use
+     * @param regex       the delimiter to use
      * @param keyMapper
      * @param valueMapper
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function)
      */
     public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(String regex,
-            Function<? super CharSequence, K> keyMapper,
-            Function<? super CharSequence, V> valueMapper) {
+                                                                     Function<? super CharSequence, K> keyMapper,
+                                                                     Function<? super CharSequence, V> valueMapper) {
         return toMap(regex, keyMapper, valueMapper, duplicateKeyMergeThrower());
     }
 
@@ -213,7 +206,7 @@ public final class MapExtractor {
      * element, this method is meant to be used in the same way as the equivalent in the
      * {@link Collectors} class.
      *
-     * @param regex the delimiter to use
+     * @param regex       the delimiter to use
      * @param keyMapper
      * @param valueMapper
      * @param merger
@@ -221,9 +214,9 @@ public final class MapExtractor {
      * @see Collectors#toMap(Function, Function, BinaryOperator)
      */
     public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(String regex,
-            Function<? super CharSequence, K> keyMapper,
-            Function<? super CharSequence, V> valueMapper,
-            BinaryOperator<V> merger) {
+                                                                     Function<? super CharSequence, K> keyMapper,
+                                                                     Function<? super CharSequence, V> valueMapper,
+                                                                     BinaryOperator<V> merger) {
         return toMap(regex, keyMapper, valueMapper, merger, HashMap::new);
     }
 
@@ -232,7 +225,7 @@ public final class MapExtractor {
      * element, this method is meant to be used in the same way as the equivalent in the
      * {@link Collectors} class.
      *
-     * @param regex the delimiter to use
+     * @param regex       the delimiter to use
      * @param keyMapper
      * @param valueMapper
      * @param merger
@@ -247,12 +240,16 @@ public final class MapExtractor {
         Stream.of(regex, keyMapper, valueMapper, merger, mapSupplier)
                 .forEach(Objects::requireNonNull);
         return Collector.of(mapSupplier,
-                (m, i) -> { String[] pair = splitWith(regex).apply(i);
+                (m, i) -> {
+                    String[] pair = splitWith(regex).apply(i);
                     m.merge(keyMapper.apply(pair[0]), valueMapper.apply(pair[1]),
-                            merger); },
-                (a, b) -> { b.entrySet().forEach(
-                    entry -> a.merge(entry.getKey(), entry.getValue(), merger));
-                    return a; },
+                            merger);
+                },
+                (a, b) -> {
+                    b.entrySet().forEach(
+                            entry -> a.merge(entry.getKey(), entry.getValue(), merger));
+                    return a;
+                },
                 Characteristics.IDENTITY_FINISH);
     }
 
@@ -280,19 +277,20 @@ public final class MapExtractor {
      *
      * @param regex the delimiter to use
      * @return a pair of {@link String}s, the second element will be an empty
-     *         {@link String} ({@code ""}) if there is no second sub-{@link String} from
-     *         the split
+     * {@link String} ({@code ""}) if there is no second sub-{@link String} from
+     * the split
      */
     private static Function<? super CharSequence, String[]>
-            splitWith(String regex) {
-        return v -> { String[] result = v.toString().split(regex, 2);
-            return result.length == 2 ? result : new String[] { result[0], "" };
+    splitWith(String regex) {
+        return v -> {
+            String[] result = v.toString().split(regex, 2);
+            return result.length == 2 ? result : new String[]{result[0], ""};
         };
     }
 
     /**
      * @return a {@link Function} that treats the input as a key by trimming it and
-     *         removing {@code "\"} characters
+     * removing {@code "\"} characters
      */
     private static Function<? super CharSequence, String> toKey() {
         return k -> k.toString().trim().replace("\\", "");
@@ -300,7 +298,7 @@ public final class MapExtractor {
 
     /**
      * @return a {@link Function} that treats the input as a value by trimming
-     *         whitespace characters from the front only
+     * whitespace characters from the front only
      */
     private static Function<? super CharSequence, String> toValue() {
         return v -> v.toString().replaceFirst("^\\s+", "");
@@ -319,7 +317,10 @@ public final class MapExtractor {
      * @return the first {@link List} appended with the contents of the second one
      */
     private static <T> BinaryOperator<List<T>> joinList() {
-        return (a, b) -> { a.addAll(b); return a; };
+        return (a, b) -> {
+            a.addAll(b);
+            return a;
+        };
     }
 
     /**
@@ -342,63 +343,63 @@ public final class MapExtractor {
                     "Duplicate key for values \"%s\" and \"%s\".", a, b));
         };
     }
-    
+
     /**
      * @return a {@link Parser} implementation that uses comma ({@code ,}) as the record
-     *         separator
+     * separator
      * @see #withChar(char)
      */
     public static Parser<String, String> withComma() {
         return withChar(',');
     }
-    
+
     /**
      * @return a {@link Parser} implementation that uses semicolon ({@code ;}) as the
-     *         record separator
+     * record separator
      * @see #withChar(char)
      */
     public static Parser<String, String> withSemicolon() {
         return withChar(';');
     }
-    
+
     /**
      * @return a {@link Parser} implementation that uses tab ({@code \t}) as the record
-     *         separator
+     * separator
      * @see #withChar(char)
      */
     public static Parser<String, String> withTab() {
         return withChar('\t');
     }
-    
+
     /**
      * The returning implementation uses {@link #REGEX_DELIMITER} as the field separator,
      * and joins values of duplicate keys using {@link #JOIN_DELIMITER}.
-     * 
+     *
      * @param rs the record separator character to use
      * @return a {@link Parser} implementation that uses {@code rs} as the record
-     *         separator
+     * separator
      * @see #with(String, String, String)
      */
     public static Parser<String, String> withChar(char rs) {
         return with(String.valueOf(rs), REGEX_DELIMITER, JOIN_DELIMITER);
     }
-    
+
     /**
      * The returning implementation uses {@link #REGEX_DELIMITER} as the field separator,
      * and joins values of duplicate keys using {@link #JOIN_DELIMITER}.
-     * 
+     *
      * @return a {@link Parser} implementation that uses the system's line separator as
-     *         the record separator
+     * the record separator
      * @see #with(String, String, String)
      */
     public static Parser<String, String> withNewline() {
         return with(System.lineSeparator(), REGEX_DELIMITER, JOIN_DELIMITER);
     }
-    
+
     /**
      * The returning implementation uses an empty {@link String} for concatenating values
      * of duplicate keys.
-     * 
+     *
      * @param rs the record separator to use
      * @param fs the field separator to use
      * @return a {@link Parser} implementation defined with the method arguments
@@ -407,7 +408,7 @@ public final class MapExtractor {
     public static Parser<String, String> with(String rs, String fs) {
         return with(rs, fs, "");
     }
-    
+
     /**
      * The returning implementation applies {@link #toKey()} and {@link #toValue()}
      * mappers on the resulting fields as well. Combining values of duplicate keys is done
@@ -419,35 +420,43 @@ public final class MapExtractor {
      * <li>Otherwise, {@link String#join(CharSequence, CharSequence...)} is used. This is
      * done so that there will not be any superfluous separators in the final value.</li>
      * </ol>
-     * 
-     * @param rs the record separator to use
-     * @param fs the field separator to use
+     *
+     * @param rs  the record separator to use
+     * @param fs  the field separator to use
      * @param ofs the output field separator to use
      * @return a {@link Parser} implementation defined with the method arguments
      * @see #toKey()
      * @see #toValue()
      */
     public static Parser<String, String> with(String rs, String fs, String ofs) {
-        return with(rs, fs, (Function<String, String>) toKey().compose(String::toString), 
-                (Function<String, String>) toValue().compose(String::toString), 
-                ofs == null ? (a, b) -> b : 
-                    (a, b) -> a.isEmpty() ? b : b.isEmpty() ? a : String.join(ofs, a, b));
+        return with(rs, fs, (Function<String, String>) toKey().compose(String::toString),
+                (Function<String, String>) toValue().compose(String::toString),
+                MapExtractor.joinString(ofs));
     }
-    
+
+    private static BinaryOperator<String> joinString(String ofs) {
+        return (a, b) -> {
+            if (ofs == null || a.isEmpty()) {
+                return b;
+            }
+            return b.isEmpty() ? a : String.join(ofs, a, b);
+        };
+    }
+
     /**
-     * @param rs the record separator to use
-     * @param fs the field separator to use
+     * @param rs          the record separator to use
+     * @param fs          the field separator to use
      * @param keyMapper
      * @param valueMapper
      * @param merger
      * @return a {@link Parser} implementation defined with the method arguments
      */
-    public static <K, V> Parser<K, V> with(String rs, String fs, 
-            Function<String, K> keyMapper, Function<String, V> valueMapper, 
-            BinaryOperator<V> merger) {
+    public static <K, V> Parser<K, V> with(String rs, String fs,
+                                           Function<String, K> keyMapper, Function<String, V> valueMapper,
+                                           BinaryOperator<V> merger) {
         return new Parser<>(rs, fs, keyMapper, valueMapper, merger);
     }
-    
+
     /**
      * A class meant for parsing {@link CharSequence}s to {@link Map}s. Whereas the main
      * {@link MapExtractor} utility class adheres more closely to line-based processing,
@@ -474,23 +483,23 @@ public final class MapExtractor {
     public static final class Parser<K, V> {
         private final Function<? super CharSequence, Stream<String[]>> flattener;
         private final Collector<String[], ?, Map<K, V>> collector;
-        
+
         /**
-         * @param rs the record separator to use
-         * @param fs the field separator to use
+         * @param rs          the record separator to use
+         * @param fs          the field separator to use
          * @param keyMapper
          * @param valueMapper
          * @param merger
          */
-        private Parser(String rs, String fs, Function<String, K> keyMapper, 
-                Function<String, V> valueMapper, BinaryOperator<V> merger) {
+        private Parser(String rs, String fs, Function<String, K> keyMapper,
+                       Function<String, V> valueMapper, BinaryOperator<V> merger) {
             Stream.of(rs, fs, keyMapper, valueMapper, merger)
                     .forEach(Objects::requireNonNull);
             flattener = s -> Arrays.stream(s.toString().split(rs)).map(splitWith(fs));
-            collector = Collectors.toMap(i -> keyMapper.apply(i[0]), 
+            collector = Collectors.toMap(i -> keyMapper.apply(i[0]),
                     i -> valueMapper.apply(i[1]), merger);
         }
-        
+
         /**
          * @param inputs
          * @return the desired {@link Map}
@@ -499,11 +508,11 @@ public final class MapExtractor {
         public Map<K, V> parse(CharSequence... inputs) {
             return parse(Arrays.stream(inputs));
         }
-        
+
         /**
          * Parses the {@link Stream} into a combined {@link Map}, skipping zero-length
          * elements.
-         * 
+         *
          * @param inputs
          * @return the desired {@link Map}
          */
