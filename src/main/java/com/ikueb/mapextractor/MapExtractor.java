@@ -16,10 +16,7 @@
 package com.ikueb.mapextractor;
 
 import java.util.*;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collector.Characteristics;
@@ -149,19 +146,17 @@ public final class MapExtractor {
      * element, this method is meant to be used in a similar way as the equivalent in the
      * {@link Collectors} class, except that the third argument {@code valueMapper} exists
      * to do the conversion of map values as well, instead of using the stream elements.
-     * <p>
-     * Implementation note: the aggregation on values is done by mapping each value as a
-     * single-element {@link List}, and then calling
-     * {@link List#addAll(java.util.Collection)} as the merge function to
-     * {@link MapExtractor#toMap(String, Function, Function, BinaryOperator)}.
      *
      * @param regex       the delimiter to use
      * @param keyMapper
      * @param valueMapper
      * @return a {@link Map}
+     * @implNote the aggregation on values is done by mapping each value as a single-element
+     * {@link List}, and then calling {@link List#addAll(java.util.Collection)} as the merge
+     * function to {@link MapExtractor#toMap(String, Function, Function, BinaryOperator)}
      * @see Collectors#groupingBy(Function)
      */
-    public static <K, V> Collector<CharSequence, ?, Map<K, List<V>>> groupingBy(
+    public static <K, V, A> Collector<CharSequence, A, Map<K, List<V>>> groupingBy(
             String regex,
             Function<? super CharSequence, K> keyMapper,
             Function<? super CharSequence, V> valueMapper) {
@@ -179,7 +174,7 @@ public final class MapExtractor {
      * @param joinDelimiter the join delimiter to use
      * @return a {@link Collector}
      */
-    public static Collector<CharSequence, ?, Map<String, String>> toMapAndJoin(
+    public static <A> Collector<CharSequence, A, Map<String, String>> toMapAndJoin(
             String regex, String joinDelimiter) {
         return toMap(regex, toKey(), toValue(), join(joinDelimiter));
     }
@@ -195,9 +190,9 @@ public final class MapExtractor {
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function)
      */
-    public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(String regex,
-                                                                     Function<? super CharSequence, K> keyMapper,
-                                                                     Function<? super CharSequence, V> valueMapper) {
+    public static <K, V, A> Collector<CharSequence, A, Map<K, V>> toMap(String regex,
+                                                                        Function<? super CharSequence, K> keyMapper,
+                                                                        Function<? super CharSequence, V> valueMapper) {
         return toMap(regex, keyMapper, valueMapper, duplicateKeyMergeThrower());
     }
 
@@ -213,10 +208,10 @@ public final class MapExtractor {
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function, BinaryOperator)
      */
-    public static <K, V> Collector<CharSequence, ?, Map<K, V>> toMap(String regex,
-                                                                     Function<? super CharSequence, K> keyMapper,
-                                                                     Function<? super CharSequence, V> valueMapper,
-                                                                     BinaryOperator<V> merger) {
+    public static <K, V, A> Collector<CharSequence, A, Map<K, V>> toMap(String regex,
+                                                                        Function<? super CharSequence, K> keyMapper,
+                                                                        Function<? super CharSequence, V> valueMapper,
+                                                                        BinaryOperator<V> merger) {
         return toMap(regex, keyMapper, valueMapper, merger, HashMap::new);
     }
 
@@ -233,18 +228,19 @@ public final class MapExtractor {
      * @return a {@link Map}
      * @see Collectors#toMap(Function, Function, BinaryOperator, Supplier)
      */
-    public static <K, V, M extends Map<K, V>> Collector<CharSequence, ?, M> toMap(
+    public static <K, V, A, M extends Map<K, V>> Collector<CharSequence, A, M> toMap(
             String regex, Function<? super CharSequence, K> keyMapper,
             Function<? super CharSequence, V> valueMapper,
             BinaryOperator<V> merger, Supplier<M> mapSupplier) {
         Stream.of(regex, keyMapper, valueMapper, merger, mapSupplier)
                 .forEach(Objects::requireNonNull);
-        return Collector.of(mapSupplier,
-                (m, i) -> {
-                    String[] pair = splitWith(regex).apply(i);
-                    m.merge(keyMapper.apply(pair[0]), valueMapper.apply(pair[1]),
-                            merger);
-                },
+        BiConsumer<M, ? super CharSequence> accumulator = (m, i) -> {
+            String[] pair = splitWith(regex).apply(i);
+            m.merge(keyMapper.apply(pair[0]), valueMapper.apply(pair[1]),
+                    merger);
+        };
+        return (Collector<CharSequence, A, M>) Collector.of(mapSupplier,
+                accumulator,
                 (a, b) -> {
                     b.entrySet().forEach(
                             entry -> a.merge(entry.getKey(), entry.getValue(), merger));
